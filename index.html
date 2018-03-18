@@ -10,9 +10,110 @@
     </div>
     <script type="text/javascript">
     // npm run start
+
+  /*const promise = fetch('https://jsonplaceholder.typicode.com/posts');
+    promise.then(response => response.json())
+      .then(json => console.log(json) || (document.querySelector(".a").innerHTML = JSON.stringify(json)));*/
+
+  function AppView(){
+    this.table = document.createElement("table");
+    this.rowModels = [];//Użyć metody sort((a,b)=>a-b) po odpowiednich elelmentach
+
     const promise = fetch('https://jsonplaceholder.typicode.com/posts');
     promise.then(response => response.json())
-      .then(json => console.log(json) || (document.querySelector(".a").innerHTML = JSON.stringify(json)))
+      .then(json => {
+        //CREATE FIRST ROW
+        const header = JSON.parse(JSON.stringify(json[0]));
+        const headerElement = document.createElement('tr');
+        Object.keys(header).forEach(key => {
+          const cell = document.createElement('th');
+          const cellContent = document.createTextNode(key);
+          cell.appendChild(cellContent);
+
+          cell.addEventListener('click',event=>{
+            const compare = this.compare(key);
+            this.rowModels.sort(compare);
+            this.clearViews();
+            this.rerender();
+          });
+
+          headerElement.appendChild(cell);
+        });
+        this.table.appendChild(headerElement);
+        //CREATE REST
+        json.forEach(post=>{
+            const obj = JSON.stringify(post);
+            const model = new RowModel();
+            Object.assign(model,JSON.parse(obj));
+            this.rowModels.push(model);
+            const view = new RowView(model);
+            this.table.appendChild(view.render());
+        });
+      });
+  }
+
+  AppView.prototype = {
+    render(){
+      return this.table;
+    },
+    compare(property){
+      return function(a,b){
+        if(a[property]<b[property]){
+          return -1;
+        }else if(a[property]>b[property]){
+          return 1;
+        }else{
+          return 0;
+        }
+      }
+    },
+    rerender(){
+      this.rowModels.forEach(model => {
+        const view = new RowView(model);
+        this.table.appendChild(view.render());
+      });
+    },
+    clearViews(){
+      const parent = document.querySelector("table");
+      while(parent.firstChild){
+        parent.removeChild(parent.lastChild);
+        if(document.getElementsByTagName("tr").length<2){
+          break;
+        }
+      }
+    }
+  }
+
+
+  function RowView(model){
+    this.row = document.createElement("tr");
+    Object.keys(model).forEach(key => {
+      const td = document.createElement("td");
+      const input = document.createTextNode(model[key]);
+      td.appendChild(input);
+      this.row.appendChild(td);
+    });
+  }
+
+  RowView.prototype = {
+    render(){
+      return this.row;
+    }
+  }
+
+  function RowModel(){
+
+  }
+
+  document.addEventListener("DOMContentLoaded", function(event){
+    const app = new AppView();
+    document.querySelector(".a").appendChild(app.render());
+  });
+  //then(value => success)
+  //catch(errer => faile)
+
+  //const p = new Promise ((resolve, reject) => setTimeout(() => resolve(42), 4000))
+//stworzyc tablice z naglowkami, po kliknieciu w naglowek posortowac od ascen do desc - zrobic modele np na row i widoki
 
     </script>
   </body>
