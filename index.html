@@ -11,20 +11,20 @@
     <script type="text/javascript">
     // npm run start
 
-  /*const promise = fetch('https://jsonplaceholder.typicode.com/posts');
-    promise.then(response => response.json())
-      .then(json => console.log(json) || (document.querySelector(".a").innerHTML = JSON.stringify(json)));*/
-
   function AppView(){
     this.table = document.createElement("table");
-    this.rowModels = [];//Użyć metody sort((a,b)=>a-b) po odpowiednich elelmentach
-
-    const promise = fetch('https://jsonplaceholder.typicode.com/posts');
+    this.rowModels = [];
+    this.sort = "asc";
+    this.rowViesStore = [];
+//zrobic fetch na zewntrz i wykorzystac dane json jakie fetch zwroci
+    const promise = fetch('https://jsonplaceholder.typicode.com/comments');
     promise.then(response => response.json())
       .then(json => {
+
         //CREATE FIRST ROW
-        const header = JSON.parse(JSON.stringify(json[0]));
+        const header = json[0];
         const headerElement = document.createElement('tr');
+
         Object.keys(header).forEach(key => {
           const cell = document.createElement('th');
           const cellContent = document.createTextNode(key);
@@ -32,23 +32,25 @@
 
           cell.addEventListener('click',event=>{
             const compare = this.compare(key);
-            this.rowModels.sort(compare);
-            this.clearViews();
-            this.rerender();
-          });
 
+            const compareUpdated = compare(this.sort);
+            this.rowModels.sort(compareUpdated);
+            this.clearViews();
+            this.rowViewRender();
+            if(this.sort == "asc"){
+              this.sort = "desc";
+            }else{
+              this.sort = "asc";
+            }
+          });
           headerElement.appendChild(cell);
         });
+        
         this.table.appendChild(headerElement);
+
         //CREATE REST
-        json.forEach(post=>{
-            const obj = JSON.stringify(post);
-            const model = new RowModel();
-            Object.assign(model,JSON.parse(obj));
-            this.rowModels.push(model);
-            const view = new RowView(model);
-            this.table.appendChild(view.render());
-        });
+        this.rowModels = json;
+        this.rowViewRender();
       });
   }
 
@@ -57,21 +59,23 @@
       return this.table;
     },
     compare(property){
-      return function(a,b){
-        if(a[property]<b[property]){
-          return -1;
-        }else if(a[property]>b[property]){
-          return 1;
-        }else{
-          return 0;
+      return function(direction){
+        const dir = direction;
+        return function(a,b){
+          if(a[property]<b[property]){
+            return dir=="asc"?-1:1;
+          }else if(a[property]>b[property]){
+            return dir=="asc"?1:-1;
+          }else{
+            return 0;
+          }
         }
       }
     },
-    rerender(){
-      this.rowModels.forEach(model => {
-        const view = new RowView(model);
-        this.table.appendChild(view.render());
-      });
+    rowViewRender(){//update
+      this.rowModels.map(model => new RowView(model))
+        .forEach(view => this.table.appendChild(view.render()));
+        //mozna tez tzrymac widoki w tablicy i dodac if funkcje ktora je delete
     },
     clearViews(){
       const parent = document.querySelector("table");
@@ -99,10 +103,6 @@
     render(){
       return this.row;
     }
-  }
-
-  function RowModel(){
-
   }
 
   document.addEventListener("DOMContentLoaded", function(event){
