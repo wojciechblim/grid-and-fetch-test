@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -11,18 +11,14 @@
     <script type="text/javascript">
     // npm run start
 
-  function AppView(){
+  function AppView(data){
     this.table = document.createElement("table");
-    this.rowModels = [];
+    this.rowModels = data;
     this.sort = "asc";
-    this.rowViesStore = [];
-//zrobic fetch na zewntrz i wykorzystac dane json jakie fetch zwroci
-    const promise = fetch('https://jsonplaceholder.typicode.com/comments');
-    promise.then(response => response.json())
-      .then(json => {
-
+    this.rowViewStore = [];
         //CREATE FIRST ROW
-        const header = json[0];
+
+        const header = this.rowModels[0];
         const headerElement = document.createElement('tr');
 
         Object.keys(header).forEach(key => {
@@ -35,7 +31,9 @@
 
             const compareUpdated = compare(this.sort);
             this.rowModels.sort(compareUpdated);
-            this.clearViews();
+            //this.clearViews();
+
+            this.rowViewStore.forEach(view => view.delete());
             this.rowViewRender();
             if(this.sort == "asc"){
               this.sort = "desc";
@@ -45,13 +43,11 @@
           });
           headerElement.appendChild(cell);
         });
-        
+
         this.table.appendChild(headerElement);
 
         //CREATE REST
-        this.rowModels = json;
         this.rowViewRender();
-      });
   }
 
   AppView.prototype = {
@@ -73,11 +69,10 @@
       }
     },
     rowViewRender(){//update
-      this.rowModels.map(model => new RowView(model))
-        .forEach(view => this.table.appendChild(view.render()));
-        //mozna tez tzrymac widoki w tablicy i dodac if funkcje ktora je delete
+      this.rowViewStore = this.rowModels.map(model => new RowView(model));
+        this.rowViewStore.forEach(view => this.table.appendChild(view.render()));
     },
-    clearViews(){
+    clearViews(){//not needed anymore
       const parent = document.querySelector("table");
       while(parent.firstChild){
         parent.removeChild(parent.lastChild);
@@ -102,18 +97,21 @@
   RowView.prototype = {
     render(){
       return this.row;
+    },
+    delete(){
+      const parent = this.row.parentNode;
+      parent.removeChild(this.row);
     }
   }
 
   document.addEventListener("DOMContentLoaded", function(event){
-    const app = new AppView();
-    document.querySelector(".a").appendChild(app.render());
+
+    const game = fetch('https://jsonplaceholder.typicode.com/comments').then(response => response.json()).then(data =>document.querySelector(".a").appendChild(new AppView(data).render()));
   });
   //then(value => success)
   //catch(errer => faile)
 
   //const p = new Promise ((resolve, reject) => setTimeout(() => resolve(42), 4000))
-//stworzyc tablice z naglowkami, po kliknieciu w naglowek posortowac od ascen do desc - zrobic modele np na row i widoki
 
     </script>
   </body>
